@@ -1,0 +1,12 @@
+123|Lara|adminlara|lara123|ADMIN|50000.0
+9293|Lara Admin|laraAdmin|lara123|ADMIN|50000.0
+2006|Admin User|admin|admin123|ADMIN|50000.0
+124|Rija|rija|rija123|CUSTOMER|18|false
+2001|Ali Raza|ali|ali123|CUSTOMER|100|false
+2003|Zain Malik|zain|zain123|CUSTOMER|120|false
+2004|Sara Khan|sara|sara123|CUSTOMER|50|false
+2005|Usman Tariq|usman|usman123|CUSTOMER|90|false
+2010|Laiba|laiba|laiba123|CUSTOMER|0|true
+2022|Ayesha|ayesha|ayesha123|CUSTOMER|0|false
+1008|Laiba|laiba|laiba123|CUSTOMER|0|false
+002|Abdul Hadi|hadi|002|CUSTOMER|0|false
