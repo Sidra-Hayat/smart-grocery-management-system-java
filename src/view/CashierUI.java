@@ -73,7 +73,6 @@ public class CashierUI extends JFrame {
             }
         });
 
-
         // Panel setup
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
         btnPanel.setBackground(lightBackground);

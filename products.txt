@@ -1,20 +1,21 @@
-ID: P001 | Name: Milk | Price: 16.00 | Qty: 50 | Barcode: 890123456001|2025-08-26|890123456001
-ID: P002 | Name: Eggs | Price: 26.00 | Qty: 40 | Barcode: 890123456002|2025-08-26|890123456002
-ID: P003 | Name: Bread | Price: 70.00 | Qty: 60 | Barcode: 890123456003|2025-08-19|890123456003
-ID: P004 | Name: Butter | Price: 250.00 | Qty: 20 | Barcode: 890123456004|2025-09-15|890123456004
-ID: P005 | Name: Yogurt | Price: 170.00 | Qty: 40 | Barcode: 890123456005|2025-08-26|890123456005
-ID: P006 | Name: Fresh Juice | Price: 160.00 | Qty: 30 | Barcode: 890123456006|2025-08-21|890123456006
-ID: P007 | Name: Bananas | Price: 180.00 | Qty: 70 | Barcode: 890123456007|2025-08-20|890123456007
-ID: P008 | Name: Apples | Price: 150.00 | Qty: 50 | Barcode: 890123456008|2025-08-26|890123456008
-ID: P009 | Name: Chicken | Price: 550.00 | Qty: 35 | Barcode: 890123456009|2025-08-19|890123456009
-ID: P010 | Name: Fish | Price: 500.00 | Qty: 20 | Barcode: 890123456010|2025-08-18|890123456010
-ID: NP001 | Name: Rice | Price: 300.00 | Qty: 100 | Barcode: null
-ID: NP002 | Name: Sugar | Price: 270.00 | Qty: 80 | Barcode: null
-ID: NP003 | Name: Salt | Price: 40.00 | Qty: 90 | Barcode: null
-ID: NP004 | Name: Flour | Price: 300.00 | Qty: 70 | Barcode: null
-ID: NP005 | Name: Cooking Oil | Price: 550.00 | Qty: 60 | Barcode: null
-ID: NP006 | Name: Tea | Price: 400.00 | Qty: 50 | Barcode: null
-ID: NP007 | Name: Coffee | Price: 400.00 | Qty: 30 | Barcode: null
-ID: NP008 | Name: Soap | Price: 70.00 | Qty: 117 | Barcode: null
-ID: NP009 | Name: Shampoo | Price: 600.00 | Qty: 40 | Barcode: null
-ID: NP010 | Name: Toothpaste | Price: 90.00 | Qty: 70 | Barcode: null
+P001|Milk|Dairy|16.00|50|2025-08-26|890123456001
+P002|Eggs|Dairy|26.00|40|2025-08-26|890123456002
+P003|Bread|Bakery|70.00|60|2025-08-19|890123456003
+P004|Butter|Dairy|250.00|25|2025-09-15|890123456004
+P005|Yogurt|Dairy|170.00|40|2025-08-26|890123456005
+P006|Fresh Juice|Beverage|160.00|30|2025-08-21|890123456006
+P007|Bananas|Fruit|180.00|70|2025-08-20|890123456007
+P008|Apples|Fruit|150.00|50|2025-08-26|890123456008
+P009|Chicken|Meat|550.00|35|2025-08-19|890123456009
+P010|Fish|Meat|500.00|20|2025-08-18|890123456010
+
+NP001|Rice|Grocery|300.00|100|null|null
+NP002|Sugar|Grocery|270.00|80|null|null
+NP003|Salt|Grocery|40.00|90|null|null
+NP004|Flour|Grocery|300.00|70|null|null
+NP005|Cooking Oil|Grocery|550.00|60|null|null
+NP006|Tea|Grocery|400.00|50|null|null
+NP007|Coffee|Grocery|400.00|30|null|null
+NP008|Soap|Household|70.00|117|null|null
+NP009|Shampoo|Household|600.00|40|null|null
+NP010|Toothpaste|Household|90.00|70|null|null
