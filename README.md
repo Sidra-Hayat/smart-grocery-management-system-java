@@ -1,56 +1,58 @@
-🛒 Smart Grocery Management System
+Smart Grocery Management System (Java Swing)
 
-A Java-based desktop Grocery Store Management System built using Java Swing and Object-Oriented Programming principles.
-The system simulates real-world supermarket operations including inventory control, billing (POS), customer management, and reporting.
+A full-featured desktop-based Grocery Store Management System built using Java Swing and Object-Oriented Programming principles.
+The system simulates real-world retail operations including inventory control, billing (POS), customer management, reporting, and notifications.
 
-✨ Key Features
+✨ Features
 📦 Inventory Management
 Add, update, and delete products
 Support for perishable and non-perishable items
-Automatic stock tracking
-Expiry date-based pricing adjustments
+Real-time stock tracking
+Low-stock and expiry alerts
 Barcode-based product identification
-File-based persistent storage
+Automatic data persistence using file handling
 💳 Point of Sale (POS)
-Barcode scanning for quick checkout
-Cart-based billing system
-Automatic inventory update after sale
+Barcode scanning checkout system
+Automatic price calculation
 Sales transaction recording
+Inventory update after each sale
 Multi-cashier support
 👥 Customer Management
-Customer registration and authentication
-Role-based access (Admin, Cashier, Customer)
-Loyalty points system
+Customer registration and login
+Role-based access control (Admin / Cashier / Customer)
 Order history tracking
+Loyalty points system
 📊 Reports & Analytics
 Top-selling products report
-Daily and monthly sales reports
-Inventory statistics
+Daily / weekly / monthly sales reports
+Inventory statistics overview
 Business performance tracking
 🔔 Notification System
-Low-stock alerts
-Expiry warnings for products
+Low stock alerts
+Expiry warnings
 Real-time GUI notifications
 🧠 System Architecture
 
-The project is designed using Object-Oriented Programming (OOP) and follows a modular structure:
+The project follows clean Object-Oriented Design principles:
 
-MVC Pattern (Model – View – Controller separation)
-Encapsulation for data protection
-Reusable business logic layers
-File-based persistence (no database)
+MVC (Model–View–Controller) architecture
+Separation of business logic and UI
+Modular package structure
+Reusable components and managers
+File-based data persistence
 🛠️ Tech Stack
 Java (JDK 11+)
 Java Swing (GUI Development)
 Object-Oriented Programming (OOP)
 File I/O (Data Storage)
+Serialization
 LocalDate API
 📂 Project Structure
 src/
-├── model/        # Core entities (Product, Customer, Order, etc.)
-├── manager/      # Business logic (Inventory, Sales, Reports)
-├── view/         # GUI screens (Swing UI)
-├── utils/        # Helper classes (File handling, Barcode scanner)
+├── model/        # Entity classes (Product, Customer, Order, etc.)
+├── manager/      # Business logic layer
+├── view/         # GUI (Swing UI screens)
+├── utils/        # Helper classes (Barcode, File handling)
 └── Main.java     # Application entry point
 🚀 How to Run
 1. Clone Repository
@@ -58,12 +60,11 @@ git clone https://github.com/Sidra-Hayat/smart-grocery-management-system-java.gi
 cd smart-grocery-management-system-java
 2. Open in IDE
 IntelliJ IDEA / Eclipse / NetBeans
-Ensure JDK 11 or higher is installed
-3. Run Project
+Configure JDK 11+
+3. Run Application
 
-Run the file:
+Run the Main.java file from your IDE.
 
-Main.java
 👤 Default Login Credentials
 Role	Username	Password
 Admin	lara	lara123
@@ -71,19 +72,26 @@ Customer	rija	rija123
 Cashier	ali	ali123
 📸 Screenshots
 
-Add screenshots here after running the project
+Add screenshots in /screenshots folder:
+
+Login Screen
+Admin Dashboard
+Inventory Management
+POS System
+
+Example:
 
 screenshots/login.png
 screenshots/dashboard.png
 screenshots/inventory.png
 screenshots/pos.png
-📌 Current Limitations
+📌 Limitations
 File-based storage (no database integration yet)
-GUI design needs further UI/UX improvements
-No automated testing implemented
+GUI design can be further improved
+No automated unit testing implemented
 Hardcoded demo configuration data
-🔮 Future Enhancements
-MySQL / PostgreSQL database integration
+🔮 Future Improvements
+Database integration (MySQL / PostgreSQL)
 Web-based version using Spring Boot
 Barcode scanner hardware integration
 AI-based product recommendations
@@ -95,19 +103,8 @@ Sidra Hayat
 GitHub: @Sidra-Hayat
 
 ⭐ Project Highlights
-
-✔ Real-world grocery store simulation
-✔ Fully functional POS system
-✔ Role-based authentication system
-✔ Modular OOP architecture
-✔ Inventory + reporting system
-
-🟢 WHY THIS VERSION IS PERFECT FOR YOUR PORTFOLIO
-
-This version gives you:
-
-✔ Clean recruiter scan (5–10 seconds understanding)
-✔ Strong technical signal (OOP + MVC + Swing)
-✔ No unnecessary clutter
-✔ Professional tone (not “assignment looking”)
-✔ Clear structure (used in real company repos)
+Real-world grocery store simulation
+Complete POS (billing) system
+Role-based authentication system
+Inventory + reporting system
+Clean OOP + MVC architecture
