@@ -10,20 +10,19 @@ import java.awt.*;
 import java.util.List;
 
 public class ViewInventoryUI extends JFrame {
+
     private final InventoryManager inventoryManager;
     private JTable productTable;
     private JTextField searchField;
-    private JButton searchButton;
-    private List<Product> allProducts;  // store full product list for filtering
+    private List<Product> allProducts;
 
-
-    // Professional UI Theme Colors
-    private final Color backgroundColor = new Color(135, 211, 177);              // deep navy-blue
-    private final Color rowBackground = new Color(255, 255, 255);                // slightly lighter rows
-    private final Color tableTextColor = new Color(25, 1, 1);            // light gray text
-    private final Color headerColor = new Color(37, 154, 105);                // vivid blue
-    private final Color headerTextColor = Color.WHITE;
-    private boolean modal;
+    // Professional Theme
+    private final Color primaryGreen = Color.decode("#2E7D32");
+    private final Color darkGreen = Color.decode("#1B5E20");
+    private final Color lightBackground = Color.decode("#F1F8E9");
+    private final Color alternateRow = Color.decode("#DCEDC8");
+    private final Color darkText = Color.decode("#212121");
+    private final Color hoverYellow = Color.decode("#FDD835");
 
     public ViewInventoryUI(InventoryManager inventoryManager) {
         this.inventoryManager = inventoryManager;
@@ -32,112 +31,200 @@ public class ViewInventoryUI extends JFrame {
     }
 
     private void initializeUI() {
-        setTitle("Inventory");
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(700, 450);
+
+        setTitle("Available Products");
+        setSize(800, 520);
         setLocationRelativeTo(null);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(backgroundColor);
+        JPanel panel = new JPanel(new BorderLayout(15, 15));
+        panel.setBackground(lightBackground);
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        String[] columns = {"Product ID", "Name", "Price", "Quantity"};
-        DefaultTableModel model = new DefaultTableModel(columns, 0);
-        productTable = new JTable(model) {
+        //======================
+        // Title
+        //======================
+
+        JLabel title = new JLabel("Available Products", SwingConstants.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        title.setForeground(primaryGreen);
+
+        //======================
+        // Search Panel
+        //======================
+
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        searchPanel.setBackground(lightBackground);
+
+        JLabel lblSearch = new JLabel("Search Product:");
+        lblSearch.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblSearch.setForeground(darkGreen);
+
+        searchField = new JTextField(20);
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        searchField.setPreferredSize(new Dimension(220, 35));
+
+        JButton searchButton = createButton("Search", primaryGreen);
+        JButton clearButton = createButton("Clear", Color.GRAY);
+
+        searchButton.addActionListener(e -> filterProducts());
+        searchField.addActionListener(e -> filterProducts());
+
+        clearButton.addActionListener(e -> {
+            searchField.setText("");
+            updateTable(allProducts);
+        });
+
+        searchPanel.add(lblSearch);
+        searchPanel.add(searchField);
+        searchPanel.add(searchButton);
+        searchPanel.add(clearButton);
+
+        JPanel northPanel = new JPanel(new BorderLayout());
+        northPanel.setBackground(lightBackground);
+        northPanel.add(title, BorderLayout.NORTH);
+        northPanel.add(searchPanel, BorderLayout.SOUTH);
+
+        panel.add(northPanel, BorderLayout.NORTH);
+
+        //======================
+        // Table
+        //======================
+
+        String[] columns = {
+                "Product ID",
+                "Product Name",
+                "Price (Rs)",
+                "Available Quantity"
+        };
+
+        DefaultTableModel tableModel = new DefaultTableModel(columns, 0) {
             @Override
-            public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
-                Component comp = super.prepareRenderer(renderer, row, column);
-                comp.setBackground(row % 2 == 0 ? rowBackground : backgroundColor);
-                comp.setForeground(tableTextColor);
-                return comp;
+            public boolean isCellEditable(int row, int column) {
+                return false;
             }
         };
 
-        // Styling
-        productTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        productTable.setRowHeight(28);
-        productTable.setGridColor(new Color(144, 166, 181));
-        productTable.setShowHorizontalLines(true);
-        productTable.setSelectionBackground(headerColor.darker());
-        productTable.setSelectionForeground(Color.WHITE);
-        productTable.setForeground(tableTextColor);
-        productTable.setBackground(backgroundColor);
+        productTable = new JTable(tableModel) {
 
+            @Override
+            public Component prepareRenderer(TableCellRenderer renderer,
+                                             int row,
+                                             int column) {
+
+                Component c = super.prepareRenderer(renderer, row, column);
+
+                if (!isRowSelected(row)) {
+                    c.setBackground(row % 2 == 0 ? Color.WHITE : alternateRow);
+                    c.setForeground(darkText);
+                }
+
+                return c;
+            }
+        };
+
+        productTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        productTable.setRowHeight(30);
+        productTable.setShowGrid(false);
+        productTable.setIntercellSpacing(new Dimension(0, 0));
+        productTable.setSelectionBackground(primaryGreen);
+        productTable.setSelectionForeground(Color.WHITE);
+
+        productTable.getTableHeader().setBackground(primaryGreen);
+        productTable.getTableHeader().setForeground(Color.WHITE);
         productTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
-        productTable.getTableHeader().setBackground(headerColor);
-        productTable.getTableHeader().setForeground(headerTextColor);
-        productTable.getTableHeader().setOpaque(false);
+        productTable.getTableHeader().setPreferredSize(new Dimension(0, 35));
 
         JScrollPane scrollPane = new JScrollPane(productTable);
+        scrollPane.getViewport().setBackground(lightBackground);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.getViewport().setBackground(backgroundColor);
 
         panel.add(scrollPane, BorderLayout.CENTER);
-        add(panel);
 
-        // Create search bar components
-        searchField = new JTextField(20);
-        searchButton = new JButton("Search");
+        //======================
+        // Bottom Panel
+        //======================
 
-        // Add action listener to search button
-        searchButton.addActionListener(e -> filterProducts());
+        JButton closeButton = createButton("Close", primaryGreen);
+        closeButton.addActionListener(e -> dispose());
 
-        // Optional: Press Enter in text field triggers search
-        searchField.addActionListener(e -> filterProducts());
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.setBackground(lightBackground);
+        bottomPanel.add(closeButton);
 
-        JPanel searchPanel = new JPanel();
-        searchPanel.setBackground(backgroundColor);  // keep color theme consistent
-        searchPanel.add(new JLabel("Search Product:"));
-        searchPanel.add(searchField);
-        searchPanel.add(searchButton);
-
-        panel.add(searchPanel, BorderLayout.NORTH);  // Add search panel at the top
-        panel.add(scrollPane, BorderLayout.CENTER);
+        panel.add(bottomPanel, BorderLayout.SOUTH);
 
         add(panel);
-
-        loadProducts();  // loads full product list
     }
-  public void loadProducts() {
-        DefaultTableModel model = (DefaultTableModel) productTable.getModel();
-        model.setRowCount(0); // clear existing
 
-        List<Product> allProducts = inventoryManager.getAllProducts();
-        // store full list for filtering
+    public void loadProducts() {
+        allProducts = inventoryManager.getAllProducts();
         updateTable(allProducts);
     }
+
     private void updateTable(List<Product> products) {
+
         DefaultTableModel model = (DefaultTableModel) productTable.getModel();
-        model.setRowCount(0); // clear existing rows
+        model.setRowCount(0);
+
+        if (products == null)
+            return;
 
         for (Product p : products) {
-            Object[] row = {
+
+            model.addRow(new Object[]{
                     p.getId(),
                     p.getName(),
-                    String.format("%.2f", p.getPrice()),
+                    String.format("Rs %.2f", p.getPrice()),
                     p.getQuantity()
-            };
-            model.addRow(row);
+            });
         }
     }
+
     private void filterProducts() {
+
         String query = searchField.getText().trim().toLowerCase();
+
         if (query.isEmpty()) {
-            updateTable(allProducts);  // no search term, show all
+            updateTable(allProducts);
             return;
         }
 
         List<Product> filtered = allProducts.stream()
-                .filter(p -> p.getName().toLowerCase().contains(query))
+                .filter(p ->
+                        p.getName().toLowerCase().contains(query)
+                                || p.getId().toLowerCase().contains(query))
                 .toList();
 
         updateTable(filtered);
     }
 
+    private JButton createButton(String text, Color color) {
 
+        JButton button = new JButton(text);
 
-    public void setModal(boolean modal) {
-        this.modal = modal;
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        button.setBackground(color);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
+
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                button.setBackground(hoverYellow);
+                button.setForeground(darkText);
+            }
+
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                button.setBackground(color);
+                button.setForeground(Color.WHITE);
+            }
+        });
+
+        return button;
     }
-
-   
 }

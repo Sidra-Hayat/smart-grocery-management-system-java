@@ -13,76 +13,88 @@ import java.util.Map;
 
 public class TopSellingReportUI extends JFrame {
 
-    // Theme Colors
-    private final Color primaryGreen = Color.decode("#2E7D32");
-    private final Color hoverYellow = Color.decode("#FDD835");
+    private final Color primaryGreen    = Color.decode("#2E7D32");
+    private final Color hoverYellow     = Color.decode("#FDD835");
     private final Color lightBackground = Color.decode("#F1F8E9");
-    private final Color darkText = Color.decode("#212121");
-    private final Font buttonFont = new Font("Segoe UI", Font.BOLD, 14);
+    private final Color darkText        = Color.decode("#212121");
+    private final Font  buttonFont      = new Font("Segoe UI", Font.BOLD, 14);
 
     public TopSellingReportUI(ReportManager reportManager, InventoryManager inventoryManager) {
         setTitle("Top-Selling Products Report");
-        setSize(700, 450);
+        setSize(750, 450);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         getContentPane().setBackground(lightBackground);
         setLayout(new BorderLayout(10, 10));
 
-        // Title Label
         JLabel titleLabel = new JLabel("Top-Selling Products", SwingConstants.CENTER);
         titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 20));
         titleLabel.setForeground(primaryGreen);
         titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
         add(titleLabel, BorderLayout.NORTH);
 
-        // Table columns
-        String[] columns = {"Product ID", "Product Name", "Category", "Price", "Quantity Sold", "Stock Left"};
-        DefaultTableModel tableModel = new DefaultTableModel(columns, 0);
+        String[] columns = {"Product ID", "Product Name", "Category", "Price (Rs)", "Quantity Sold", "Stock Left"};
+        DefaultTableModel tableModel = new DefaultTableModel(columns, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
 
-        // Fetch top-selling products
         List<Map.Entry<String, Integer>> topProducts = reportManager.getTopSellingProducts();
 
         if (topProducts.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No products sold yet.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            tableModel.addRow(new Object[]{
+                    "-", "No sales recorded yet — cashier has not sold any products.", "-", "-", "-", "-"
+            });
         } else {
-            // Sort by Quantity Sold descending
             topProducts.sort(Map.Entry.<String, Integer>comparingByValue(Comparator.reverseOrder()));
 
             for (Map.Entry<String, Integer> entry : topProducts) {
                 String productId = entry.getKey();
-                int qtySold = entry.getValue();
+                int    qtySold   = entry.getValue();
 
                 Product product = inventoryManager.getProductById(productId);
                 if (product != null) {
-                    Object[] rowData = {
+                    // FIX: derive category since getCategory() does not exist
+                    String category = (product.getDaysToExpiry() >= 0) ? "Perishable" : "Non-Perishable";
+
+                    // FIX: was 5 values for 6 columns — Category was commented out
+                    // causing every column after it to be shifted/wrong
+                    tableModel.addRow(new Object[]{
                             product.getId(),
                             product.getName(),
-                           // product.getCategory(),
-                            product.getPrice(),
+                            category,                                      // ← was missing
+                            String.format("Rs %.2f", product.getPrice()),
                             qtySold,
-                            product.getQuantity()
-                    };
-                    tableModel.addRow(rowData);
+                            product.getQuantity()                          // ← now shows correctly
+                    });
                 }
             }
         }
 
-        // JTable setup
         JTable table = new JTable(tableModel);
         table.setFillsViewportHeight(true);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         table.setForeground(darkText);
         table.setBackground(Color.WHITE);
-        table.setRowHeight(25);
+        table.setRowHeight(28);
+        table.setShowGrid(false);
+        table.setIntercellSpacing(new Dimension(0, 0));
         table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         table.getTableHeader().setBackground(primaryGreen);
         table.getTableHeader().setForeground(Color.WHITE);
+        table.getTableHeader().setPreferredSize(new Dimension(0, 34));
+
+        // Column widths
+        table.getColumnModel().getColumn(0).setPreferredWidth(130);
+        table.getColumnModel().getColumn(1).setPreferredWidth(160);
+        table.getColumnModel().getColumn(2).setPreferredWidth(120);
+        table.getColumnModel().getColumn(3).setPreferredWidth(100);
+        table.getColumnModel().getColumn(4).setPreferredWidth(110);
+        table.getColumnModel().getColumn(5).setPreferredWidth(90);
 
         JScrollPane scrollPane = new JScrollPane(table);
         scrollPane.getViewport().setBackground(lightBackground);
         add(scrollPane, BorderLayout.CENTER);
 
-        // Close button
         JButton closeBtn = styledButton("Close");
         closeBtn.addActionListener(e -> dispose());
 
@@ -92,30 +104,25 @@ public class TopSellingReportUI extends JFrame {
         add(btnPanel, BorderLayout.SOUTH);
     }
 
-    // Styled button consistent with AdminUI
     private JButton styledButton(String text) {
         JButton btn = new JButton(text);
         btn.setFont(buttonFont);
         btn.setBackground(primaryGreen);
         btn.setForeground(Color.WHITE);
         btn.setFocusPainted(false);
-        btn.setBorder(BorderFactory.createEmptyBorder(8, 16, 8, 16));
+        btn.setOpaque(true);
+        btn.setContentAreaFilled(true);
+        btn.setBorderPainted(false);
+        btn.setBorder(BorderFactory.createEmptyBorder(8, 24, 8, 24));
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
         btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                btn.setBackground(hoverYellow);
-                btn.setForeground(darkText);
+                btn.setBackground(hoverYellow); btn.setForeground(darkText);
             }
-
-            @Override
             public void mouseExited(java.awt.event.MouseEvent e) {
-                btn.setBackground(primaryGreen);
-                btn.setForeground(Color.WHITE);
+                btn.setBackground(primaryGreen); btn.setForeground(Color.WHITE);
             }
         });
-
         return btn;
     }
 }

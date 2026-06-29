@@ -3,126 +3,110 @@ package view;
 import javax.swing.*;
 import java.awt.*;
 import manager.*;
-import model.Cashier;
-import model.Product;
 
 public class AdminUI extends JFrame {
 
-    // Theme Colors
     private final Color primaryGreen = Color.decode("#2E7D32");
-    private final Color hoverYellow = Color.decode("#FDD835");
-    private final Color hoverRed = Color.decode("#E53935");
-    private final Color lightBackground = Color.decode("#F1F8E9");
-    private final Color darkText = Color.decode("#212121");
-    private final Font buttonFont = new Font("Segoe UI", Font.BOLD, 14);
-
-    private LoginManager loginManager;
-    private ReportManager reportManager;
-    private NotificationManager notificationManager;
+    private final Color hoverYellow  = Color.decode("#FDD835");
+    private final Color hoverRed     = Color.decode("#E53935");
+    private final Color darkText     = Color.decode("#212121");
+    private final Font  buttonFont   = new Font("Segoe UI", Font.BOLD, 14);
 
     public AdminUI(InventoryManager inventoryManager, CashierManager cashierManager,
                    NotificationManager notificationManager, LoginManager loginManager) {
-        this.reportManager = new ReportManager(inventoryManager, cashierManager);
-        this.notificationManager = notificationManager;
-        this.loginManager = loginManager;
+
+        ReportManager reportManager = new ReportManager(inventoryManager, cashierManager);
+
+        try {
+            UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+        } catch (Exception ignored) {}
 
         setTitle("Admin Panel");
         setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setMinimumSize(new Dimension(1024, 768));
 
-        // Background Image
-        JLabel backgroundLabel = new JLabel();
-        backgroundLabel.setLayout(new GridBagLayout());
-        ImageIcon backgroundIcon = new ImageIcon(getClass().getResource("/icons/admin.png"));
-        Image bgImage = backgroundIcon.getImage();
-        Image scaledBg = bgImage.getScaledInstance(
-                Toolkit.getDefaultToolkit().getScreenSize().width,
-                Toolkit.getDefaultToolkit().getScreenSize().height,
-                Image.SCALE_SMOOTH);
-        backgroundLabel.setIcon(new ImageIcon(scaledBg));
+        // FIX: JPanel with paintComponent — NOT a JLabel — so buttons stay clickable
+        JPanel backgroundPanel = new JPanel(new GridBagLayout()) {
+            private final Image bg = loadImage();
+            private Image loadImage() {
+                try { return new ImageIcon(getClass().getResource("/icons/admin.png")).getImage(); }
+                catch (Exception e) { return null; }
+            }
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                if (bg != null) g.drawImage(bg, 0, 0, getWidth(), getHeight(), this);
+                else { g.setColor(Color.decode("#E8F5E9")); g.fillRect(0, 0, getWidth(), getHeight()); }
+            }
+        };
+        backgroundPanel.setOpaque(true);
 
-        // Transparent button panel
         JPanel buttonPanel = new JPanel(new GridLayout(7, 1, 15, 15));
         buttonPanel.setOpaque(false);
-        buttonPanel.setPreferredSize(new Dimension(300, 400));
+        buttonPanel.setPreferredSize(new Dimension(300, 420));
 
-        // Buttons
-        JButton manageProducts = styledButton("Manage Products", false);
-        manageProducts.addActionListener(e -> new ProductManagerUI(inventoryManager).setVisible(true));
+        JButton manageProducts   = btn("Manage Products",   false);
+        JButton approveCustomers = btn("Approve Customers", false);
+        JButton manageCustomers  = btn("Manage Customers",  false);
+        JButton manageCashiers   = btn("Manage Cashiers",   false);
+        JButton viewReports      = btn("View Reports",      false);
+        JButton notifications    = btn("Notifications",     false);
+        JButton logout           = btn("Logout",            true);
 
-        JButton approveCustomers = styledButton("Approve Customers", false);
+        manageProducts  .addActionListener(e -> new ProductManagerUI(inventoryManager).setVisible(true));
         approveCustomers.addActionListener(e -> new ApproveCustomersUI(loginManager).setVisible(true));
-
-        JButton manageCustomers = styledButton("Manage Customers", false);
-        manageCustomers.addActionListener(e -> new ManageCustomersUI(loginManager).setVisible(true));
-
-        JButton manageCashiersBtn = styledButton("Manage Cashiers", false);
-        manageCashiersBtn.addActionListener(e -> {
-            ManageCashiersUI ui = new ManageCashiersUI(cashierManager, loginManager);
-            ui.setVisible(true);
+        manageCustomers .addActionListener(e -> new ManageCustomersUI(loginManager).setVisible(true));
+        manageCashiers  .addActionListener(e -> new ManageCashiersUI(cashierManager, loginManager).setVisible(true));
+        viewReports     .addActionListener(e -> new TopSellingReportUI(reportManager, inventoryManager).setVisible(true));
+        notifications   .addActionListener(e -> {
+            UrgentNotificationsUI d = new UrgentNotificationsUI(this, notificationManager);
+            d.setVisible(true);
         });
-
-        JButton viewReports = styledButton("View Reports", false);
-        viewReports.addActionListener(e -> new TopSellingReportUI(reportManager, inventoryManager).setVisible(true));
-
-        JButton notifications = styledButton("Notifications", false);
-        notifications.addActionListener(e -> new UrgentNotificationsUI(this, notificationManager).setVisible(true));
-
-        JButton logoutButton = styledButton("Logout", true);
-        logoutButton.addActionListener(e -> {
-            int confirm = JOptionPane.showConfirmDialog(
-                    this,
-                    "Are you sure you want to log out?",
-                    "Confirm Logout",
-                    JOptionPane.YES_NO_OPTION
-            );
-            if (confirm == JOptionPane.YES_OPTION) {
+        logout.addActionListener(e -> {
+            int ok = JOptionPane.showConfirmDialog(this,
+                    "Are you sure you want to log out?", "Confirm Logout", JOptionPane.YES_NO_OPTION);
+            if (ok == JOptionPane.YES_OPTION) {
                 dispose();
-                new LoginUI(loginManager, inventoryManager, cashierManager, notificationManager, reportManager).setVisible(true);
+                new LoginUI(loginManager, inventoryManager, cashierManager,
+                        notificationManager, reportManager).setVisible(true);
             }
         });
 
-        // Add buttons to panel
         buttonPanel.add(manageProducts);
         buttonPanel.add(approveCustomers);
         buttonPanel.add(manageCustomers);
-        buttonPanel.add(manageCashiersBtn);
+        buttonPanel.add(manageCashiers);
         buttonPanel.add(viewReports);
         buttonPanel.add(notifications);
-        buttonPanel.add(logoutButton);
+        buttonPanel.add(logout);
 
-        backgroundLabel.add(buttonPanel, new GridBagConstraints());
-        setContentPane(backgroundLabel);
+        backgroundPanel.add(buttonPanel, new GridBagConstraints());
+        setContentPane(backgroundPanel);
         setVisible(true);
     }
 
-    // Enhanced styledButton: supports red hover for logout button
-    private JButton styledButton(String text, boolean isLogout) {
-        JButton btn = new JButton(text);
-        btn.setBackground(primaryGreen);
-        btn.setForeground(Color.WHITE);
-        btn.setFont(buttonFont);
-        btn.setFocusPainted(false);
-        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                if (isLogout) {
-                    btn.setBackground(hoverRed);
-                } else {
-                    btn.setBackground(hoverYellow);
-                }
-                btn.setForeground(darkText);
+    private JButton btn(String text, boolean isLogout) {
+        JButton b = new JButton(text);
+        b.setFont(buttonFont);
+        b.setOpaque(true);
+        b.setContentAreaFilled(true);
+        b.setBorderPainted(false);
+        b.setBackground(primaryGreen);
+        b.setForeground(Color.WHITE);
+        b.setFocusPainted(false);
+        b.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        b.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        b.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                b.setBackground(isLogout ? hoverRed : hoverYellow);
+                b.setForeground(darkText);
             }
-
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                btn.setBackground(primaryGreen);
-                btn.setForeground(Color.WHITE);
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                b.setBackground(primaryGreen);
+                b.setForeground(Color.WHITE);
             }
         });
-
-        return btn;
+        return b;
     }
 }

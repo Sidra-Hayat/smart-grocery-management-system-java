@@ -8,6 +8,10 @@ import model.OrderItem;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class OrderHistoryUI extends JFrame {
@@ -30,10 +34,10 @@ public class OrderHistoryUI extends JFrame {
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(new Color(30, 38, 44));
+        panel.setBackground(Color.decode("#F1F8E9"));
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        String[] columns = {"Order ID", "Product Name", "Quantity", "Price Per Unit", "Total Price"};
+        String[] columns = {"#", "Order Date & Time", "Product Name", "Qty", "Price/Unit", "Total"};
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -42,10 +46,23 @@ public class OrderHistoryUI extends JFrame {
         };
 
         List<Order> orders = orderHistoryManager.getOrdersByCustomer(customer);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd-MM-yyyy  HH:mm");
+        int rowNum = 1;
         for (Order order : orders) {
+            // Parse timestamp from orderId (format: ORD<epochMillis>)
+            String dateStr;
+            try {
+                long millis = Long.parseLong(order.getOrderId().replace("ORD", ""));
+                LocalDateTime ldt = LocalDateTime.ofInstant(
+                        Instant.ofEpochMilli(millis), ZoneId.systemDefault());
+                dateStr = ldt.format(fmt);
+            } catch (Exception ex) {
+                dateStr = order.getOrderId();
+            }
             for (OrderItem item : order.getItems()) {
                 model.addRow(new Object[]{
-                        order.getOrderId(),
+                        rowNum++,
+                        dateStr,
                         item.getProduct().getName(),
                         item.getQuantity(),
                         String.format("Rs%.2f", item.getProduct().getPrice()),
@@ -68,7 +85,7 @@ public class OrderHistoryUI extends JFrame {
 
         closeButton = createStyledButton("Close", new Color(231, 76, 60)); // red
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        btnPanel.setBackground(new Color(30, 38, 44));
+        btnPanel.setBackground(Color.decode("#F1F8E9"));
         btnPanel.add(closeButton);
 
         panel.add(btnPanel, BorderLayout.SOUTH);

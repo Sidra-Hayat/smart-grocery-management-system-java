@@ -3,41 +3,25 @@ package model;
 import java.time.LocalDate;
 
 public class NonPerishableProduct extends Product {
+
     private int shelfLifeInDays;
 
     public NonPerishableProduct(String id, String name, double price, int quantity) {
-        super(id, name, price, quantity, LocalDate.now().plusYears(5)); // Default long expiry
-        this.shelfLifeInDays = 365; // default shelf life
+        super(id, name, price, quantity, LocalDate.now().plusYears(5));
+        this.shelfLifeInDays = 1825; // 5 years default
+        setBarcode("BC" + System.currentTimeMillis()); // auto-generated
     }
 
-    public NonPerishableProduct(String id, String name, double price, int quantity, int shelfLifeInDays ,String barcode) {
+    public NonPerishableProduct(String id, String name, double price,
+                                int quantity, int shelfLifeInDays) {
         super(id, name, price, quantity, LocalDate.now().plusDays(shelfLifeInDays));
         this.shelfLifeInDays = shelfLifeInDays;
-    }
-    public static NonPerishableProduct fromString(String line) {
-        String[] parts = line.split("\\|");
-        String id = parts[0];
-        String name = parts[1];
-        double price = Double.parseDouble(parts[2]);
-        int quantity = Integer.parseInt(parts[3]);
-        String barcode = parts.length > 5 ? parts[5] : null;
-        NonPerishableProduct np = new NonPerishableProduct(id, name, price, quantity);
-        np.setBarcode(barcode);
-        return np;
+        setBarcode("BC" + System.currentTimeMillis());
     }
 
-
-
-    public int getShelfLifeInDays() {
-        return shelfLifeInDays;
-    }
-
-    public void setShelfLifeInDays(int shelfLifeInDays) {
-        this.shelfLifeInDays = shelfLifeInDays;
-    }
+    public int  getShelfLifeInDays() { return shelfLifeInDays; }
+    public void setShelfLifeInDays(int d) { this.shelfLifeInDays = d; }
 
     @Override
-    public String getBarcode() {
-        return super.getBarcode(); // fixed infinite recursion
-    }
+    public String toString() { return super.toString(); }
 }
