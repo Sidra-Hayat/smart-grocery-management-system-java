@@ -132,28 +132,8 @@ public class ProductManagerUI extends JFrame {
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-
     private void viewAllProducts() {
-        StringBuilder sb = new StringBuilder();
-        for (Product p : inventoryManager.getAllProducts()) {
-            String category = p.getDaysToExpiry() >= 0 ? "Perishable" : "Non-Perishable";
-            sb.append("• ").append(p.getName())
-                    .append("  |  Rs ").append(String.format("%.2f", p.getPrice()))
-                    .append("  |  Qty: ").append(p.getQuantity())
-                    .append("  |  ").append(category);
-            if (p.getDaysToExpiry() >= 0)
-                sb.append("  |  Expires in: ").append(p.getDaysToExpiry()).append(" days");
-            sb.append("\n");
-        }
-
-        if (sb.length() == 0) sb.append("No products in inventory yet.");
-
-        JTextArea textArea = new JTextArea(sb.toString());
-        textArea.setEditable(false);
-        textArea.setFont(new Font("Monospaced", Font.PLAIN, 13));
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        scrollPane.setPreferredSize(new Dimension(450, 220));
-        JOptionPane.showMessageDialog(this, scrollPane, "All Products", JOptionPane.INFORMATION_MESSAGE);
+        new ViewInventoryUI(inventoryManager).setVisible(true);
     }
 
     private void recommendProduct() {
