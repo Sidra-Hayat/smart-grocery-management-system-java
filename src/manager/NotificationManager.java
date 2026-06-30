@@ -10,7 +10,7 @@ import java.util.Optional;
 
 public class NotificationManager {
 
-    public static final int LOW_STOCK_THRESHOLD = 5;
+    public static final int LOW_STOCK_THRESHOLD = 10;
 
     private final List<Notification> notifications = new ArrayList<>();
     private final InventoryManager inventoryManager;

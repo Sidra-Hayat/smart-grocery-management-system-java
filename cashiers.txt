@@ -1,3 +1,0 @@
-C001|Ali Raza|ali|ali123|45000.0
-C1|Ali|ali123|123|2500.0
-C2|Sara|sara01|pass|2800.5

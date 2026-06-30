@@ -12,16 +12,16 @@ public class InventoryManager {
     private List<Product> products;
     private NotificationManager notificationManager;
 
-    // Track which products have been ordered by customers
-    private List<String> orderedProductIds;
+    // Track which products have been ordered by customers and HOW MANY were ordered
+    // Key = productId, Value = quantity the customer ordered
+    private Map<String, Integer> orderedProductQty;
 
     public InventoryManager() {
         products = new ArrayList<>();
-        orderedProductIds = new ArrayList<>();
-        loadProducts(); // Load stock from file
+        orderedProductQty = new HashMap<>();
+        loadProducts();
     }
 
-    // ✅ Link NotificationManager
     public void setNotificationManager(NotificationManager notificationManager) {
         this.notificationManager = notificationManager;
     }
@@ -30,142 +30,163 @@ public class InventoryManager {
         return notificationManager;
     }
 
-    // Add a product to inventory
     public void addProduct(Product product) {
         products.add(product);
-        if (notificationManager != null) {
-            notificationManager.checkStock(product);
-        }
+        if (notificationManager != null) notificationManager.checkStock(product);
         saveProducts();
     }
 
-    // Update a product in inventory
     public void updateProduct(Product product) {
         for (int i = 0; i < products.size(); i++) {
             if (products.get(i).getId().equals(product.getId())) {
                 products.set(i, product);
-                if (notificationManager != null) {
-                    notificationManager.checkStock(product);
-                }
+                if (notificationManager != null) notificationManager.checkStock(product);
                 saveProducts();
                 return;
             }
         }
     }
 
-    // Get all products
-    public List<Product> getAllProducts() {
-        return products;
-    }
+    public List<Product> getAllProducts() { return products; }
 
-    // Find product by barcode
     public Product getProductByBarcode(String barcode) {
         for (Product p : products) {
-            if (p.getBarcode().equals(barcode)) {
-                return p;
-            }
+            if (p.getBarcode() != null && p.getBarcode().equals(barcode)) return p;
         }
         return null;
     }
 
     public Product getProductById(String id) {
         for (Product p : products) {
-            if (p.getId().equalsIgnoreCase(id)) {
-                return p;
-            }
+            if (p.getId().equalsIgnoreCase(id)) return p;
         }
-        return null; // Product not found
+        return null;
     }
 
-    // Sell a product (reduces stock permanently)
     public boolean sellProduct(String productId, int quantity) {
         Product product = getProductById(productId);
         if (product != null && product.getQuantity() >= quantity) {
             product.setQuantity(product.getQuantity() - quantity);
+            updateProduct(product);
 
-            // Remove from ordered list if sold out
-            if (product.getQuantity() == 0) {
-                orderedProductIds.remove(productId);
+            // Reduce ordered qty; if fully fulfilled, remove from ordered map so
+            // the cashier table stops showing this product
+            int remaining = orderedProductQty.getOrDefault(productId, 0) - quantity;
+            if (remaining <= 0) {
+                orderedProductQty.remove(productId);
+            } else {
+                orderedProductQty.put(productId, remaining);
             }
-
-            updateProduct(product); // Triggers notification and saves to file
             return true;
         }
-        return false; // Not enough stock or product doesn't exist
+        return false;
     }
 
-    // ---------------- Ordered Products ----------------
-
-    // Mark product as ordered by customer
-    public void markProductAsOrdered(String productId) {
-        if (!orderedProductIds.contains(productId)) {
-            orderedProductIds.add(productId);
-        }
+    // ── Ordered Products ────────────────────────────────────────────────────
+    // Now accepts the quantity the customer actually ordered
+    public void markProductAsOrdered(String productId, int orderedQty) {
+        // If same product ordered again, add to existing qty
+        orderedProductQty.merge(productId, orderedQty, Integer::sum);
     }
 
-    // Get only products that have been ordered (for Cashier UI)
+    // Returns virtual Product objects where getQuantity() == the ORDERED qty (not full stock)
     public List<Product> getOrderedProducts() {
-        List<Product> orderedProducts = new ArrayList<>();
-        for (String id : orderedProductIds) {
-            Product p = getProductById(id);
-            if (p != null && p.getQuantity() > 0) {
-                orderedProducts.add(p);
+        List<Product> result = new ArrayList<>();
+        for (Map.Entry<String, Integer> entry : orderedProductQty.entrySet()) {
+            Product real = getProductById(entry.getKey());
+            if (real != null && real.getQuantity() > 0) {
+                // Clone the product and set quantity = what the customer ordered
+                Product clone;
+                if (real instanceof PerishableProduct) {
+                    clone = new PerishableProduct(real.getId(), real.getName(),
+                            real.getPrice(), entry.getValue(),
+                            ((PerishableProduct) real).getExpiryDate(), real.getBarcode());
+                } else {
+                    clone = new NonPerishableProduct(real.getId(), real.getName(),
+                            real.getPrice(), entry.getValue());
+                    clone.setBarcode(real.getBarcode());
+                }
+                result.add(clone);
             }
         }
-        return orderedProducts;
+        return result;
     }
 
-    // ---------------- File Handling ----------------
+    // Remove from ordered map once cashier has processed the sale
+    public void removeFromOrdered(String productId) {
+        orderedProductQty.remove(productId);
+    }
 
-    // Load products from file
-
-    public void loadProducts() {
-        products.clear();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader("products.txt"))) {
-            String line;
-
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split("\\|");
-
-                if (parts.length < 7) continue;
-
-                String id = parts[0];
-                String name = parts[1];
-
-                // parts[2] is category → ignore if your Product doesn't use it
-                double price = Double.parseDouble(parts[3]);
-                int quantity = Integer.parseInt(parts[4]);
-
-                String expiryStr = parts[5];
-                String barcode = parts[6];
-
-                Product product;
-
-                if (!expiryStr.equals("null")) {
-                    LocalDate expiryDate = LocalDate.parse(expiryStr);
-                    product = new PerishableProduct(id, name, price, quantity, expiryDate, barcode);
+    // ── File Save ───────────────────────────────────────────────────────────
+    // Format: id|name|category|price|quantity|expiry|barcode
+    //   category = "Perishable" or "NonPerishable"
+    //   expiry   = ISO date for perishable, "null" for non-perishable
+    public void saveProducts() {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter("products.txt"))) {
+            for (Product p : products) {
+                String category;
+                String expiry;
+                if (p instanceof PerishableProduct) {
+                    category = "Perishable";
+                    expiry = ((PerishableProduct) p).getExpiryDate() != null
+                            ? ((PerishableProduct) p).getExpiryDate().toString()
+                            : "null";
                 } else {
-                    product = new NonPerishableProduct(id, name, price, quantity);
+                    category = "NonPerishable";
+                    expiry = "null";
                 }
-
-                products.add(product);
+                String barcode = (p.getBarcode() != null) ? p.getBarcode() : "";
+                // Write exactly 7 pipe-separated fields
+                bw.write(p.getId() + "|" + p.getName() + "|" + category + "|"
+                        + p.getPrice() + "|" + p.getQuantity() + "|" + expiry + "|" + barcode);
+                bw.newLine();
             }
-
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    // ── File Load ───────────────────────────────────────────────────────────
+    // Reads same format: id|name|category|price|quantity|expiry|barcode
+    public void loadProducts() {
+        products.clear();
+        File file = new File("products.txt");
+        if (!file.exists()) return; // first run — seed data will fill it
 
-    // Save products to file
-    public void saveProducts() {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter("products.txt"))) {
-            for (Product p : products) {
-                bw.write(p.toString());
-                bw.newLine();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                line = line.trim();
+                if (line.isEmpty()) continue;
+
+                String[] parts = line.split("\\|", -1); // -1 keeps trailing empty fields
+                if (parts.length < 7) continue;         // skip malformed lines
+
+                String id       = parts[0];
+                String name     = parts[1];
+                // parts[2] = category (used below)
+                double price;
+                int quantity;
+                try {
+                    price    = Double.parseDouble(parts[3]);
+                    quantity = Integer.parseInt(parts[4]);
+                } catch (NumberFormatException e) {
+                    continue; // skip bad line
+                }
+                String expiryStr = parts[5];
+                String barcode   = parts[6];
+
+                Product product;
+                if (!expiryStr.equals("null") && !expiryStr.isEmpty()) {
+                    LocalDate expiryDate = LocalDate.parse(expiryStr);
+                    product = new PerishableProduct(id, name, price, quantity, expiryDate, barcode);
+                } else {
+                    product = new NonPerishableProduct(id, name, price, quantity);
+                    product.setBarcode(barcode);
+                }
+                products.add(product);
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }

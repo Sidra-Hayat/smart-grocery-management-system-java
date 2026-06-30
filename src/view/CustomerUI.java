@@ -21,7 +21,7 @@ public class CustomerUI extends JFrame {
 
     private JButton viewProductsButton;
     private JButton placeOrderButton;
-    private JButton registerButton;
+    private JButton profileButton; // was: registerButton — a logged-in user shouldn't register
     private JButton logoutButton;
     private JButton viewOrderHistoryButton;
     private ReportManager reportManager;
@@ -59,7 +59,7 @@ public class CustomerUI extends JFrame {
                 g.drawImage(bgImage, 0, 0, getWidth(), getHeight(), this);
             }
         };
-        backgroundPanel.setOpaque(false);
+        backgroundPanel.setOpaque(true); // FIX: must be true so buttons are clickable
         backgroundPanel.setBorder(BorderFactory.createEmptyBorder(25, 25, 25, 25));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -80,7 +80,7 @@ public class CustomerUI extends JFrame {
 
         viewProductsButton = createStyledButton("View Products", new Color(15, 177, 109) , "grocery.jpg");
         placeOrderButton = createStyledButton("Place Order",  new Color(15, 177, 109) , "trolli.jpg");
-        registerButton = createStyledButton("Register", new Color(15, 177, 109), "user_registeration.png");
+        profileButton = createStyledButton("My Profile", new Color(15, 177, 109), "user_registeration.png");
         logoutButton = createStyledButton("Logout", new Color(118, 227, 178), "logout11.png");
         viewOrderHistoryButton = createStyledButton("Order History", new Color(15, 177, 109), "history2.png");
 
@@ -95,7 +95,7 @@ public class CustomerUI extends JFrame {
         gbc.gridx = 0;
         backgroundPanel.add(viewOrderHistoryButton, gbc);
         gbc.gridx = 1;
-        backgroundPanel.add(registerButton, gbc);
+        backgroundPanel.add(profileButton, gbc);
 
         gbc.gridy = 3;
         gbc.gridx = 0;
@@ -108,7 +108,7 @@ public class CustomerUI extends JFrame {
         // Button actions
         viewProductsButton.addActionListener(this::onViewProducts);
         placeOrderButton.addActionListener(this::onPlaceOrder);
-        registerButton.addActionListener(e -> openRegisterUI());
+        profileButton.addActionListener(e -> showProfile());
         logoutButton.addActionListener(e -> onLogout());
         viewOrderHistoryButton.addActionListener(this::onViewOrderHistory);
     }
@@ -167,9 +167,91 @@ public class CustomerUI extends JFrame {
         placeOrderUI.setVisible(true);
     }
 
-    private void openRegisterUI() {
-        RegisterUI registerUI = new RegisterUI(loginManager);
-        registerUI.setVisible(true);
+    private void showProfile() {
+        // ── Themed Profile Dialog matching the green project theme ──────────
+        JDialog dialog = new JDialog(this, "My Profile", true);
+        dialog.setSize(420, 360);
+        dialog.setLocationRelativeTo(this);
+        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+        Color primaryGreen = Color.decode("#2E7D32");
+        Color headerGreen  = Color.decode("#1B5E20");
+        Color lightBg      = Color.decode("#F1F8E9");
+        Color darkText     = Color.decode("#212121");
+        Font  labelFont    = new Font("Segoe UI", Font.BOLD, 14);
+        Font  valueFont    = new Font("Segoe UI", Font.PLAIN, 14);
+
+        // Header bar
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(headerGreen);
+        header.setBorder(BorderFactory.createEmptyBorder(16, 20, 16, 20));
+        JLabel titleLbl = new JLabel("👤 My Profile");
+        titleLbl.setFont(new Font("Segoe UI", Font.BOLD, 20));
+        titleLbl.setForeground(Color.WHITE);
+        header.add(titleLbl, BorderLayout.WEST);
+
+        // Body
+        JPanel body = new JPanel(new GridBagLayout());
+        body.setBackground(lightBg);
+        body.setBorder(BorderFactory.createEmptyBorder(24, 30, 24, 30));
+        GridBagConstraints g = new GridBagConstraints();
+        g.insets = new Insets(8, 8, 8, 8);
+        g.anchor = GridBagConstraints.WEST;
+
+        String[][] fields = {
+                {"Name",          customer.getName()},
+                {"Username",      customer.getUsername()},
+                {"Role",          "Customer"},
+                {"Loyalty Points",String.valueOf(customer.getLoyaltyPoints())}
+        };
+
+        for (int i = 0; i < fields.length; i++) {
+            g.gridx = 0; g.gridy = i; g.weightx = 0;
+            JLabel lbl = new JLabel(fields[i][0] + " :");
+            lbl.setFont(labelFont);
+            lbl.setForeground(primaryGreen);
+            body.add(lbl, g);
+
+            g.gridx = 1; g.weightx = 1;
+            JLabel val = new JLabel(fields[i][1]);
+            val.setFont(valueFont);
+            val.setForeground(darkText);
+            body.add(val, g);
+        }
+
+        // Divider
+        JSeparator sep = new JSeparator();
+        sep.setForeground(new Color(180, 210, 180));
+        g.gridx = 0; g.gridy = fields.length; g.gridwidth = 2;
+        g.fill = GridBagConstraints.HORIZONTAL;
+        g.insets = new Insets(12, 8, 12, 8);
+        body.add(sep, g);
+
+        // Close button
+        JButton closeBtn = new JButton("Close");
+        closeBtn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        closeBtn.setBackground(primaryGreen);
+        closeBtn.setForeground(Color.WHITE);
+        closeBtn.setFocusPainted(false);
+        closeBtn.setBorder(BorderFactory.createEmptyBorder(8, 24, 8, 24));
+        closeBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        closeBtn.setOpaque(true);
+        closeBtn.addMouseListener(new MouseAdapter() {
+            public void mouseEntered(MouseEvent e) { closeBtn.setBackground(Color.decode("#FDD835")); closeBtn.setForeground(darkText); }
+            public void mouseExited(MouseEvent e)  { closeBtn.setBackground(primaryGreen); closeBtn.setForeground(Color.WHITE); }
+        });
+        closeBtn.addActionListener(e -> dialog.dispose());
+
+        g.gridx = 0; g.gridy = fields.length + 1; g.gridwidth = 2;
+        g.fill = GridBagConstraints.NONE;
+        g.anchor = GridBagConstraints.CENTER;
+        g.insets = new Insets(4, 8, 4, 8);
+        body.add(closeBtn, g);
+
+        dialog.setLayout(new BorderLayout());
+        dialog.add(header, BorderLayout.NORTH);
+        dialog.add(body,   BorderLayout.CENTER);
+        dialog.setVisible(true);
     }
 
     private void onLogout() {

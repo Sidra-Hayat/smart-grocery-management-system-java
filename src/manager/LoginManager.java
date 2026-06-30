@@ -19,7 +19,7 @@ public class LoginManager {
     public LoginManager(CashierManager cashierManager) {
         this.cashierManager = cashierManager;
         loadUsersFromFile();              // Admins + Customers
-        this.cashierManager.loadCashiersFromFile(); // Cashiers from cashiers.txt
+        this.cashierManager.loadCashiersFromFile();
     }
 
     public Person login(String username, String password) {

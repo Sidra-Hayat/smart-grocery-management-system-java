@@ -10,134 +10,138 @@ import java.awt.*;
 import java.util.List;
 
 public class ViewInventoryUI extends JFrame {
+
     private final InventoryManager inventoryManager;
     private JTable productTable;
     private JTextField searchField;
-    private JButton searchButton;
-    private List<Product> allProducts;  // store full product list for filtering
+    private List<Product> allProducts; // FIX: this is now properly set in loadProducts()
 
-
-    // Professional UI Theme Colors
-    private final Color backgroundColor = new Color(135, 211, 177);              // deep navy-blue
-    private final Color rowBackground = new Color(255, 255, 255);                // slightly lighter rows
-    private final Color tableTextColor = new Color(25, 1, 1);            // light gray text
-    private final Color headerColor = new Color(37, 154, 105);                // vivid blue
+    // Theme colors
+    private final Color backgroundColor = new Color(135, 211, 177);
+    private final Color rowBackground   = new Color(255, 255, 255);
+    private final Color tableTextColor  = new Color(25, 1, 1);
+    private final Color headerColor     = new Color(37, 154, 105);
     private final Color headerTextColor = Color.WHITE;
-    private boolean modal;
 
     public ViewInventoryUI(InventoryManager inventoryManager) {
         this.inventoryManager = inventoryManager;
         initializeUI();
-        loadProducts();
+        loadProducts(); // called once, after UI is built
     }
 
     private void initializeUI() {
-        setTitle("Inventory");
+        setTitle("Inventory - All Products");
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setSize(700, 450);
+        setSize(700, 480);
         setLocationRelativeTo(null);
 
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(backgroundColor);
 
-        String[] columns = {"Product ID", "Name", "Price", "Quantity"};
-        DefaultTableModel model = new DefaultTableModel(columns, 0);
+        // ── Table ──────────────────────────────────────────────────────────
+        String[] columns = {"Product ID", "Name", "Price (Rs)", "Quantity"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            @Override public boolean isCellEditable(int r, int c) { return false; }
+        };
+
         productTable = new JTable(model) {
             @Override
             public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
                 Component comp = super.prepareRenderer(renderer, row, column);
-                comp.setBackground(row % 2 == 0 ? rowBackground : backgroundColor);
-                comp.setForeground(tableTextColor);
+                if (!isRowSelected(row)) {
+                    comp.setBackground(row % 2 == 0 ? rowBackground : backgroundColor);
+                    comp.setForeground(tableTextColor);
+                }
                 return comp;
             }
         };
 
-        // Styling
         productTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         productTable.setRowHeight(28);
         productTable.setGridColor(new Color(144, 166, 181));
         productTable.setShowHorizontalLines(true);
         productTable.setSelectionBackground(headerColor.darker());
         productTable.setSelectionForeground(Color.WHITE);
-        productTable.setForeground(tableTextColor);
-        productTable.setBackground(backgroundColor);
 
         productTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
         productTable.getTableHeader().setBackground(headerColor);
         productTable.getTableHeader().setForeground(headerTextColor);
-        productTable.getTableHeader().setOpaque(false);
+        productTable.getTableHeader().setPreferredSize(new Dimension(0, 34));
 
         JScrollPane scrollPane = new JScrollPane(productTable);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
         scrollPane.getViewport().setBackground(backgroundColor);
 
-        panel.add(scrollPane, BorderLayout.CENTER);
-        add(panel);
+        // ── Search bar ─────────────────────────────────────────────────────
+        searchField = new JTextField(22);
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 13));
 
-        // Create search bar components
-        searchField = new JTextField(20);
-        searchButton = new JButton("Search");
+        JButton searchButton = new JButton("Search");
+        searchButton.setBackground(headerColor);
+        searchButton.setForeground(Color.WHITE);
+        searchButton.setFocusPainted(false);
+        searchButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        searchButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // Add action listener to search button
+        JButton clearButton = new JButton("Clear");
+        clearButton.setBackground(new Color(180, 180, 180));
+        clearButton.setForeground(Color.WHITE);
+        clearButton.setFocusPainted(false);
+        clearButton.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        clearButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
         searchButton.addActionListener(e -> filterProducts());
-
-        // Optional: Press Enter in text field triggers search
         searchField.addActionListener(e -> filterProducts());
+        clearButton.addActionListener(e -> {
+            searchField.setText("");
+            updateTable(allProducts);
+        });
 
-        JPanel searchPanel = new JPanel();
-        searchPanel.setBackground(backgroundColor);  // keep color theme consistent
-        searchPanel.add(new JLabel("Search Product:"));
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 8));
+        searchPanel.setBackground(backgroundColor);
+        searchPanel.add(new JLabel("Search:"));
         searchPanel.add(searchField);
         searchPanel.add(searchButton);
+        searchPanel.add(clearButton);
 
-        panel.add(searchPanel, BorderLayout.NORTH);  // Add search panel at the top
-        panel.add(scrollPane, BorderLayout.CENTER);
+        // ── Assemble — only added ONCE each ────────────────────────────────
+        panel.add(searchPanel, BorderLayout.NORTH);
+        panel.add(scrollPane,  BorderLayout.CENTER);
 
-        add(panel);
-
-        loadProducts();  // loads full product list
+        add(panel); // added to frame once
     }
-  public void loadProducts() {
-        DefaultTableModel model = (DefaultTableModel) productTable.getModel();
-        model.setRowCount(0); // clear existing
 
-        List<Product> allProducts = inventoryManager.getAllProducts();
-        // store full list for filtering
+    public void loadProducts() {
+        // FIX: store into the field, not a local variable
+        allProducts = inventoryManager.getAllProducts();
         updateTable(allProducts);
     }
+
     private void updateTable(List<Product> products) {
         DefaultTableModel model = (DefaultTableModel) productTable.getModel();
-        model.setRowCount(0); // clear existing rows
-
+        model.setRowCount(0);
+        if (products == null) return;
         for (Product p : products) {
-            Object[] row = {
+            model.addRow(new Object[]{
                     p.getId(),
                     p.getName(),
                     String.format("%.2f", p.getPrice()),
                     p.getQuantity()
-            };
-            model.addRow(row);
+            });
         }
     }
+
     private void filterProducts() {
         String query = searchField.getText().trim().toLowerCase();
         if (query.isEmpty()) {
-            updateTable(allProducts);  // no search term, show all
+            updateTable(allProducts);
             return;
         }
-
+        if (allProducts == null) return;
         List<Product> filtered = allProducts.stream()
-                .filter(p -> p.getName().toLowerCase().contains(query))
+                .filter(p -> p.getName().toLowerCase().contains(query)
+                        || p.getId().toLowerCase().contains(query))
                 .toList();
-
         updateTable(filtered);
     }
-
-
-
-    public void setModal(boolean modal) {
-        this.modal = modal;
-    }
-
-   
 }

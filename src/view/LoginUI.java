@@ -62,7 +62,7 @@ public class LoginUI extends JFrame {
             }
         };
         logoPanel.setOpaque(false);
-      //  logoPanel.setPreferredSize(new Dimension(100, 100));
+        //  logoPanel.setPreferredSize(new Dimension(100, 100));
         logoPanel.setLayout(new GridBagLayout());
         JLabel logoLabel = new JLabel(logoIcon);
         logoLabel.setPreferredSize(new Dimension(90, 90));
@@ -250,11 +250,15 @@ public class LoginUI extends JFrame {
                     JOptionPane.showMessageDialog(this, "Welcome Admin " + user.getName());
                     this.dispose();
                     new AdminUI(inventoryManager, cashierManager, notificationManager, loginManager).setVisible(true);
+                    // Show low-stock alerts to admin right after login
+                    if (!notificationManager.getNotifications().isEmpty()) {
+                        new UrgentNotificationsUI(null, notificationManager).setVisible(true);
+                    }
                 } else if (role.equals("Customer") && user instanceof Customer) {
                     JOptionPane.showMessageDialog(this, "Welcome " + user.getName());
                     this.dispose();
                     new CustomerUI(inventoryManager, loginManager, (Customer) user,
-                            new OrderHistoryManager(), cashierManager, notificationManager, reportManager).setVisible(true);
+                            new OrderHistoryManager(inventoryManager), cashierManager, notificationManager, reportManager).setVisible(true);
                 } else {
                     JOptionPane.showMessageDialog(this, "Selected role doesn't match your account type.");
                 }
@@ -266,7 +270,7 @@ public class LoginUI extends JFrame {
             if (cashier != null) {
                 JOptionPane.showMessageDialog(this, "Welcome " + cashier.getName());
                 this.dispose();
-                new CashierUI(cashier, inventoryManager,notificationManager).setVisible(true); // no NotificationManager
+                new CashierUI(cashier, inventoryManager, notificationManager, loginManager, cashierManager, reportManager).setVisible(true);
             } else {
                 JOptionPane.showMessageDialog(this, "Invalid cashier credentials.");
             }
