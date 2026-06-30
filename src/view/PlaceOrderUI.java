@@ -29,9 +29,13 @@ public class PlaceOrderUI extends JFrame {
     private JButton placeOrderButton;
     private JButton cancelButton;
 
-    private final Color backgroundColor  = new Color(135, 211, 177);
-    private final Color headerColor      = new Color(37, 154, 105);
-    private final Color headerTextColor  = Color.WHITE;
+    // ── Theme — matches CustomerUI / OrderHistoryUI / ViewInventoryUI ──────
+    private final Color primaryGreen    = Color.decode("#2E7D32");
+    private final Color darkGreen       = Color.decode("#1B5E20");
+    private final Color lightBackground = Color.decode("#F1F8E9");
+    private final Color alternateRow    = Color.decode("#DCEDC8");
+    private final Color darkText        = Color.decode("#212121");
+    private final Color hoverYellow     = Color.decode("#FDD835");
 
     public PlaceOrderUI(JFrame parent, InventoryManager inventoryManager,
                         Customer customer, OrderHistoryManager orderHistoryManager) {
@@ -44,16 +48,53 @@ public class PlaceOrderUI extends JFrame {
 
     private void initializeUI(JFrame parent) {
         setTitle("Place Order - " + customer.getName());
-        setSize(700, 450);
+        setSize(760, 520);
         setLocationRelativeTo(parent);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(backgroundColor);
+        JPanel panel = new JPanel(new BorderLayout(15, 15));
+        panel.setBackground(lightBackground);
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // ── Table ──────────────────────────────────────────────────────────
-        String[] columns = {"Product ID", "Name", "Price", "Available Qty", "Order Qty"};
+        // ── Title + Search (north) ──────────────────────────────────────
+        JLabel title = new JLabel("Place Order", SwingConstants.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        title.setForeground(primaryGreen);
+
+        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        searchPanel.setBackground(lightBackground);
+
+        JLabel lblSearch = new JLabel("Search Product:");
+        lblSearch.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblSearch.setForeground(darkGreen);
+
+        searchField = new JTextField(20);
+        searchField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        searchField.setPreferredSize(new Dimension(220, 35));
+
+        searchButton = createButton("Search", primaryGreen);
+        JButton clearButton = createButton("Clear", Color.GRAY);
+
+        searchButton.addActionListener(e -> filterProducts());
+        searchField.addActionListener(e -> filterProducts());
+        clearButton.addActionListener(e -> {
+            searchField.setText("");
+            updateTable(allProducts);
+        });
+
+        searchPanel.add(lblSearch);
+        searchPanel.add(searchField);
+        searchPanel.add(searchButton);
+        searchPanel.add(clearButton);
+
+        JPanel northPanel = new JPanel(new BorderLayout());
+        northPanel.setBackground(lightBackground);
+        northPanel.add(title, BorderLayout.NORTH);
+        northPanel.add(searchPanel, BorderLayout.SOUTH);
+        panel.add(northPanel, BorderLayout.NORTH);
+
+        // ── Table ──────────────────────────────────────────────────────
+        String[] columns = {"Product ID", "Product Name", "Price (Rs)", "Available Qty", "Order Qty"};
         model = new DefaultTableModel(columns, 0) {
             @Override public boolean isCellEditable(int row, int column) { return column == 4; }
             @Override public Class<?> getColumnClass(int col) {
@@ -61,34 +102,41 @@ public class PlaceOrderUI extends JFrame {
             }
         };
 
-        productTable = new JTable(model);
+        productTable = new JTable(model) {
+            @Override
+            public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
+                Component c = super.prepareRenderer(renderer, row, column);
+                if (!isRowSelected(row)) {
+                    c.setBackground(row % 2 == 0 ? Color.WHITE : alternateRow);
+                    c.setForeground(darkText);
+                }
+                return c;
+            }
+        };
+
         productTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        productTable.setRowHeight(26);
-        productTable.getTableHeader().setBackground(headerColor);
-        productTable.getTableHeader().setForeground(headerTextColor);
-        productTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 13));
+        productTable.setRowHeight(30);
+        productTable.setShowGrid(false);
+        productTable.setIntercellSpacing(new Dimension(0, 0));
+        productTable.setSelectionBackground(primaryGreen);
+        productTable.setSelectionForeground(Color.WHITE);
+
+        productTable.getTableHeader().setBackground(primaryGreen);
+        productTable.getTableHeader().setForeground(Color.WHITE);
+        productTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        productTable.getTableHeader().setPreferredSize(new Dimension(0, 35));
 
         JScrollPane scrollPane = new JScrollPane(productTable);
+        scrollPane.getViewport().setBackground(lightBackground);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        panel.add(scrollPane, BorderLayout.CENTER);
 
-        // ── Search ─────────────────────────────────────────────────────────
-        searchField  = new JTextField(20);
-        searchButton = new JButton("Search");
-        searchButton.addActionListener(e -> filterProducts());
-        searchField.addActionListener(e -> filterProducts());
+        // ── Buttons (south) ───────────────────────────────────────────
+        placeOrderButton = createButton("Place Order", primaryGreen);
+        cancelButton     = createButton("Cancel", Color.GRAY);
 
-        JPanel searchPanel = new JPanel();
-        searchPanel.setBackground(new Color(30, 38, 44));
-        searchPanel.add(new JLabel("Search Product:"));
-        searchPanel.add(searchField);
-        searchPanel.add(searchButton);
-
-        panel.add(searchPanel, BorderLayout.NORTH);
-        panel.add(scrollPane,  BorderLayout.CENTER);
-
-        // ── Buttons ────────────────────────────────────────────────────────
-        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 15));
-        placeOrderButton = new JButton("Place Order");
-        cancelButton     = new JButton("Cancel");
+        JPanel buttonsPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 15, 10));
+        buttonsPanel.setBackground(lightBackground);
         buttonsPanel.add(placeOrderButton);
         buttonsPanel.add(cancelButton);
         panel.add(buttonsPanel, BorderLayout.SOUTH);
@@ -102,6 +150,30 @@ public class PlaceOrderUI extends JFrame {
         cancelButton.addActionListener(e -> dispose());
     }
 
+    private JButton createButton(String text, Color color) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        button.setBackground(color);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setBorder(BorderFactory.createEmptyBorder(8, 20, 8, 20));
+
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                button.setBackground(hoverYellow);
+                button.setForeground(darkText);
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                button.setBackground(color);
+                button.setForeground(Color.WHITE);
+            }
+        });
+        return button;
+    }
+
     private void updateTable(List<Product> products) {
         model.setRowCount(0);
         for (Product p : products) {
@@ -109,7 +181,7 @@ public class PlaceOrderUI extends JFrame {
                 model.addRow(new Object[]{
                         p.getId(),
                         p.getName(),
-                        String.format("Rs%.2f", p.getPrice()),
+                        String.format("Rs %.2f", p.getPrice()),
                         p.getQuantity(),
                         0
                 });
@@ -162,7 +234,7 @@ public class PlaceOrderUI extends JFrame {
         //    Do NOT reduce stock here — the cashier does that when they sell.
         for (OrderItem item : orderItems) {
             currentOrder.addItem(item);
-            inventoryManager.markProductAsOrdered(item.getProduct().getId(), item.getQuantity()); // FIX: pass ordered qty // ← cashier can now see it
+            inventoryManager.markProductAsOrdered(item.getProduct().getId(), item.getQuantity());
         }
 
         orderHistoryManager.addOrder(customer, currentOrder);

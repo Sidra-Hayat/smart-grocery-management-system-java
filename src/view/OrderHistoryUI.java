@@ -21,6 +21,14 @@ public class OrderHistoryUI extends JFrame {
     private JTable ordersTable;
     private JButton closeButton;
 
+    // ── Theme — matches CustomerUI / PlaceOrderUI / ViewInventoryUI ────────
+    private final Color primaryGreen    = Color.decode("#2E7D32");
+    private final Color darkGreen       = Color.decode("#1B5E20");
+    private final Color lightBackground = Color.decode("#F1F8E9");
+    private final Color alternateRow    = Color.decode("#DCEDC8");
+    private final Color darkText        = Color.decode("#212121");
+    private final Color hoverYellow     = Color.decode("#FDD835");
+
     public OrderHistoryUI(OrderHistoryManager orderHistoryManager, Customer customer) {
         this.orderHistoryManager = orderHistoryManager;
         this.customer = customer;
@@ -29,14 +37,21 @@ public class OrderHistoryUI extends JFrame {
 
     private void initializeUI() {
         setTitle("Order History - " + customer.getName());
-        setSize(700, 450);
+        setSize(760, 480);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Color.decode("#F1F8E9"));
+        JPanel panel = new JPanel(new BorderLayout(15, 15));
+        panel.setBackground(lightBackground);
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
+        // ── Title ────────────────────────────────────────────────────────
+        JLabel title = new JLabel("Order History", SwingConstants.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 24));
+        title.setForeground(primaryGreen);
+        panel.add(title, BorderLayout.NORTH);
+
+        // ── Table ────────────────────────────────────────────────────────
         String[] columns = {"#", "Order Date & Time", "Product Name", "Qty", "Price/Unit", "Total"};
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
@@ -71,23 +86,40 @@ public class OrderHistoryUI extends JFrame {
             }
         }
 
-        ordersTable = new JTable(model);
+        ordersTable = new JTable(model) {
+            @Override
+            public Component prepareRenderer(javax.swing.table.TableCellRenderer renderer, int row, int column) {
+                Component c = super.prepareRenderer(renderer, row, column);
+                if (!isRowSelected(row)) {
+                    c.setBackground(row % 2 == 0 ? Color.WHITE : alternateRow);
+                    c.setForeground(darkText);
+                }
+                return c;
+            }
+        };
+
         ordersTable.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        ordersTable.setRowHeight(28);
-        ordersTable.getTableHeader().setFont(new Font("Segoe UI Semibold", Font.BOLD, 16));
-        ordersTable.getTableHeader().setBackground(new Color(27, 140, 89)); // Purple header
-        ordersTable.getTableHeader().setForeground(Color.WHITE);
-        ordersTable.setSelectionBackground(new Color(25, 143, 94));
+        ordersTable.setRowHeight(30);
+        ordersTable.setShowGrid(false);
+        ordersTable.setIntercellSpacing(new Dimension(0, 0));
+        ordersTable.setSelectionBackground(primaryGreen);
         ordersTable.setSelectionForeground(Color.WHITE);
 
+        ordersTable.getTableHeader().setBackground(primaryGreen);
+        ordersTable.getTableHeader().setForeground(Color.WHITE);
+        ordersTable.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        ordersTable.getTableHeader().setPreferredSize(new Dimension(0, 35));
+
         JScrollPane scrollPane = new JScrollPane(ordersTable);
+        scrollPane.getViewport().setBackground(lightBackground);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
         panel.add(scrollPane, BorderLayout.CENTER);
 
-        closeButton = createStyledButton("Close", new Color(231, 76, 60)); // red
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        btnPanel.setBackground(Color.decode("#F1F8E9"));
+        // ── Close button ─────────────────────────────────────────────────
+        closeButton = createButton("Close", primaryGreen);
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        btnPanel.setBackground(lightBackground);
         btnPanel.add(closeButton);
-
         panel.add(btnPanel, BorderLayout.SOUTH);
 
         add(panel);
@@ -95,42 +127,27 @@ public class OrderHistoryUI extends JFrame {
         closeButton.addActionListener(e -> dispose());
     }
 
-    private JButton createStyledButton(String text, Color bgColor) {
+    private JButton createButton(String text, Color color) {
         JButton button = new JButton(text);
-        button.setPreferredSize(new Dimension(140, 45));
-        button.setBackground(bgColor);
+        button.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        button.setBackground(color);
         button.setForeground(Color.WHITE);
-        button.setFont(new Font("Segoe UI Semibold", Font.BOLD, 16));
         button.setFocusPainted(false);
-        button.setOpaque(true);
-        button.setContentAreaFilled(true);
-        button.setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(bgColor.darker().darker(), 2),
-                BorderFactory.createEmptyBorder(5, 15, 5, 15)
-        ));
+        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        button.setBorder(BorderFactory.createEmptyBorder(8, 24, 8, 24));
 
-        Color hoverColor = bgColor.brighter();
         button.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent e) {
-                button.setBackground(hoverColor);
-                button.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(bgColor.darker().darker(), 2),
-                        BorderFactory.createEmptyBorder(5, 15, 5, 15)
-                ));
+                button.setBackground(hoverYellow);
+                button.setForeground(darkText);
             }
-
             @Override
             public void mouseExited(java.awt.event.MouseEvent e) {
-                button.setBackground(bgColor);
-                button.setBorder(BorderFactory.createCompoundBorder(
-                        BorderFactory.createLineBorder(bgColor.darker().darker(), 2),
-                        BorderFactory.createEmptyBorder(5, 15, 5, 15)
-                ));
+                button.setBackground(color);
+                button.setForeground(Color.WHITE);
             }
         });
-
-        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         return button;
     }
 }
